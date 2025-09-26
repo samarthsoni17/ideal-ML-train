@@ -70,6 +70,7 @@ conda activate /$WORK/$USER/conda/envs/ai1008
 (ai1008) [ ]$ conda config --set channel_priority strict
 #-y = “yes to all prompts” (helpful for non-interactive environments like HPC)
 (ai1008) [ ]$ conda install -y jupyterlab ipython ipykernel numpy pandas scipy scikit-learn matplotlib tqdm ipywidgets pyarrow plotly
+conda install -y kaleido imageio
 
 # Make and register a named kernel (lives in $HOME; survives purges of $WORK and $SCRATCH; Jupyter sees this env by name)
 python -m ipykernel install --user --name ai1008 --display-name "ai1008 (Atlas)"
@@ -77,3 +78,13 @@ python -m ipykernel install --user --name ai1008 --display-name "ai1008 (Atlas)"
 
 #Data & env management (backup for reproducibility in case of purge)
 conda env export --from-history > $HOME/projects/quant-reasoning/environment.yml
+
+#make startup easy
+cat > samstartup.sh << 'EOF'
+#    > source /app1/ebenv
+#    > module avail /app1/ebapps/arches/flat-avx2/modules/lang/Anaconda3
+#    > module load Anaconda3/2023.09-0 && module list
+#    > source "$(conda info --base)/etc/profile.d/conda.sh"
+#    > conda activate ai1008
+#    > EOF
+source samstartup.sh

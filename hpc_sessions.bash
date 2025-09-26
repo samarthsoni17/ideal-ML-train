@@ -67,11 +67,15 @@ vim $HOME/projects/quant-reasoning/sam_jlab_cpu.pbs
 #    which jupyter; jupyter --version
 #
 #    # Pick a port and remember it
+#    # Random port helps in Security-by-entropy (non obvious port; trip-wire) AND collision avoidance with other jobs
 #    PORT=$(shuf -i 20000-60000 -n 1)
 #    echo "Port: ${PORT}"
 #
 #    # Start Jupyter (token will be printed to stdout i.e. our .out log)
-#    jupyter lab --no-browser --ip=0.0.0.0 --port=${PORT}
+#    #jupyter lab --no-browser --ip=0.0.0.0 --port=${PORT}
+#    jupyter lab --no-browser --ip=127.0.0.1 --port=${PORT}
+#    #0.0.0.0 - listen on all network interfaces; Needed when something external on the node (e.g., Open OnDemand reverse proxy) must reach the HPC over the compute node’s network
+#    #127.0.0.1 - listen only on loopback (localhost); more secure, no exposure on node's LAN; perfect for self SSH tunnelling
 
 # start the job
 JOBID=$(qsub jupyter_cpu.pbs)
@@ -97,6 +101,7 @@ cat /path/to/jobname.e<jobid>
 tail -f ~/projects/quant-reasoning/sam_jlab_cpu.o173956
 #OR, use this command to view the error/output logs:
 qcat -j $JOBID -t OU
+qcat -j $JOBID -t OU -n 100
 qcat -j $JOBID -t ER
 
 
@@ -125,6 +130,14 @@ qtop <jobid>
 # Cancel if needed:
 qdel <jobid>
 
+#copy a file from HPC to Mac
+scp username@HPCaddress:/path/to/remote/file /path/to/local/destination
+#multiple files
+scp username@HPCaddress:/path/to/remote/{file1,file2,file3} /path/to/local/destination
+#If your Mac runs SSH and can be accessed from HPC:
+scp /path/to/file mac_username@mac_ip:/path/to/destination
+
+
 #tunnel from Mac OpenSSH (terminal) to that compute node via the login node (copy port from the output log first):
 #single command using ProxyJump; then open http://localhost:<port> in browser
 ssh -J <nusid>@atlas9.nus.edu.sg <nusid>@<compute-node-fqdn> -L <port>:localhost:<port>
@@ -132,6 +145,14 @@ ssh -J <nusid>@atlas9.nus.edu.sg <nusid>@<compute-node-fqdn> -L <port>:localhost
 ssh -L <port>:<compute-node-fqdn>:<port> <nusid>@atlas9.nus.edu.sg
 #when prompted for token, paste whatever jupyter has printed in the output log...
 #http://127.0.0.1:<port>/lab?token=<...ffb5ef46...>
+# Alternatively, use fixed local port for a constant local experience with zero risk of on-node conflicts...
+ssh -J <nusid>@atlas9.nus.edu.sg <nusid>@<compute-node-fqdn> -L 16108:localhost:$PORT
+# Never need to reconfigure IDE/Browser since it always points to http://localhost:16108/?token=...
+
+#monitor jupyter servers - run on the ssh into compute node since thats where the server is up
+ss -ltnp | grep <PORT>
+jupyter server list #needs enablement of the conda env first to make the command active
+ps -u "$USER"
 
 #sample CPU PBS Script:
 #    #!/bin/bash

@@ -87,4 +87,9 @@ cat > samstartup.sh << 'EOF'
 #    > source "$(conda info --base)/etc/profile.d/conda.sh"
 #    > conda activate ai1008
 #    > EOF
+EOF
 source samstartup.sh
+
+#some unix setups
+vim ~/.vimrc
+colorscheme desert

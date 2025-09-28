@@ -30,16 +30,20 @@ hostname -f   # note this FQDN, e.g. cnode-33-43-31.hpc.local
 
 #Batch Jupyter (hands-off; you connect when it’s up)
 #Create a PBS script that launches Jupyter on a compute node and prints the info required
-vim $HOME/projects/quant-reasoning/sam_jlab_cpu.pbs
+mkdir $HOME/pbs
+mkdir $HOME/pbs/logs
+vim $HOME/pbs/sam_jlab_cpu.pbs
 #    #!/bin/bash
 #    #PBS -N sam_jlab_cpu
 #    #PBS -q ood-cloud
 #    # Keep asks small so it starts quickly; adjust if needed
 #    #PBS -l select=1:ncpus=4:mem=8gb
 #    #PBS -l walltime=04:00:00
-#    # Write logs to a known place
-#    #PBS -o /home/svu/$USER/projects/quant-reasoning/logs/sam_jlab_cpu_$PBS_JOBID.out
-#    #PBS -e /home/svu/$USER/projects/quant-reasoning/logs/sam_jlab_cpu_$PBS_JOBID.err
+#    # NOT RECOMMENDED - Write logs to a known place i.e. "/logs" in working dir
+#    #defaults are jobname.o<jobid>/jobname.e<jobid> at $PBS_O_WORKDIR directly which is just as good
+#    #PBS -o logs/hardcodedlogfilename.out
+#    #PBS -e logs/hardcodedlogfilename.err
+#    # “Join” streams: stderr is merged into stdout to get ONE log file; doing eo would merge stdout into stderr
 #    #PBS -j oe
 #
 #    set -eoux pipefail
@@ -73,12 +77,14 @@ vim $HOME/projects/quant-reasoning/sam_jlab_cpu.pbs
 #
 #    # Start Jupyter (token will be printed to stdout i.e. our .out log)
 #    #jupyter lab --no-browser --ip=0.0.0.0 --port=${PORT}
-#    jupyter lab --no-browser --ip=127.0.0.1 --port=${PORT}
+#    jupyter lab --no-browser --ip=127.0.0.1 --port=${PORT} \
+#      --ServerApp.root_dir="${HOME}/projects"
 #    #0.0.0.0 - listen on all network interfaces; Needed when something external on the node (e.g., Open OnDemand reverse proxy) must reach the HPC over the compute node’s network
 #    #127.0.0.1 - listen only on loopback (localhost); more secure, no exposure on node's LAN; perfect for self SSH tunnelling
 
 # start the job
 JOBID=$(qsub jupyter_cpu.pbs)
+JOBID=$(qsub $HOME/pbs/sam_jlab_cpu.pbs)
 
 #check if job is running and its cnode details
 qstat -ans $JOBID
@@ -99,6 +105,7 @@ qstat -xf $JOBID | egrep -i 'job_state|Exit_status|exec_host|Output_Path|Error_P
 cat /path/to/jobname.o<jobid>
 cat /path/to/jobname.e<jobid>
 tail -f ~/projects/quant-reasoning/sam_jlab_cpu.o173956
+tail -f $HOME/pbs/logs/sam_jlab_cpu.o${JOBID%%.*} #extract just the number from the JOBID
 #OR, use this command to view the error/output logs:
 qcat -j $JOBID -t OU
 qcat -j $JOBID -t OU -n 100
@@ -110,6 +117,7 @@ qdel 173408.venus01
 #to modify a queued job (eg Reduce memory & walltime) or move it to different queue
 qalter -l select=1:ncpus=1:mem=2gb -l walltime=00:20:00 <JOBID>
 qalter -q <newQueue> <JOBID>
+qalter -o /new/path/to/logs $JOBID
 # to increase current queue's walltime, pick a value within the queue’s max walltime
 qalter -l walltime=02:00:00 <JOBID>
 qstat -f <JOBID> | egrep 'Resource_List.walltime|Walltime'
@@ -187,3 +195,30 @@ ps -u "$USER"
 #	•	$HOME: code, configs, scripts, lockfiles. Snapshots exist.  ￼
 #	•	$WORK: envs, active data, outputs (purge >60 days).  ￼
 #	•	$SCRATCH: caches, temp & high-IO (purge >60 days).
+
+#helpful Unix refreshers:
+mv /source_folder/*jlab_cpu* /target_folder/
+
+# ** OPTIONAL **
+# choose IPYNB logs & token deterministically
+TOKEN="${TOKEN:-$(python - <<'PY'
+import secrets; print(secrets.token_urlsafe(24))
+PY
+)}"
+# separate server log (besides the main outlog)
+JLAB_LOG="/home/svu/<nusid>/pbs/logs/jupyter_${PBS_JOBID}.server.log"
+
+# start Jupyter in background (bind to loopback; no retries)
+jupyter lab \
+  --no-browser \
+  --ip=127.0.0.1 \
+  --port="$PORT" \
+  --ServerApp.port_retries=0 \
+  --ServerApp.root_dir="$ROOT_DIR" \
+  --ServerApp.token="$TOKEN" \
+  >"$JLAB_LOG" 2>&1 &
+
+JPID=$!
+
+# keep the job attached to the Jupyter process
+wait "$JPID"

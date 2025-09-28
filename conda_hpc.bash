@@ -79,13 +79,15 @@ python -m ipykernel install --user --name ai1008 --display-name "ai1008 (Atlas)"
 #Data & env management (backup for reproducibility in case of purge)
 conda env export --from-history > $HOME/projects/quant-reasoning/environment.yml
 
-#make startup easy
+#make startup easy - we cd to /pbs/logs so running the JOB from the pbs/logs directory for logs etc is easier
 cat > samstartup.sh << 'EOF'
 #    > source /app1/ebenv
 #    > module avail /app1/ebapps/arches/flat-avx2/modules/lang/Anaconda3
 #    > module load Anaconda3/2023.09-0 && module list
 #    > source "$(conda info --base)/etc/profile.d/conda.sh"
 #    > conda activate ai1008
+#    > cd $HOME/pbs/logs
+#    > vim $HOME/pbs/sam_jlab_cpu.pbs
 #    > EOF
 EOF
 source samstartup.sh

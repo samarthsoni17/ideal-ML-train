@@ -71,12 +71,22 @@ conda activate /$WORK/$USER/conda/envs/ai1008
 #-y = “yes to all prompts” (helpful for non-interactive environments like HPC)
 (ai1008) [ ]$ conda install -y jupyterlab ipython ipykernel numpy pandas scipy scikit-learn matplotlib tqdm ipywidgets pyarrow plotly
 (ai1008) [ ]$ conda install -y kaleido imageio
+  306  conda install -y python-kaleido imageio
+  307  conda install -y imageio-ffmpeg ffmpeg
+  731  conda install -y scikit-plot
+  760  conda install -y pydotplus
 (ai1008) [ ]$ plotly_get_chrome
+mamba install -c conda-forge pywavelets
 #The Chrome executable is now located at: /hpctmp/e1554287/conda/envs/ai1008/lib/python3.13/site-packages/choreographer/cli/browser_exe/chrome-linux64/chrome
 
 # Make and register a named kernel (lives in $HOME; survives purges of $WORK and $SCRATCH; Jupyter sees this env by name)
 python -m ipykernel install --user --name ai1008 --display-name "ai1008 (Atlas)"
 #    Installed kernelspec ai1008 in /home/svu/e1554287/.local/share/jupyter/kernels/ai1008
+
+#for tensorflow, python 3.12 is needed
+(ai1008) [ ]$ mamba create -y -n tf312 -c conda-forge python=3.12 tensorflow keras jupyterlab ipython ipykernel numpy pandas scipy scikit-learn matplotlib tqdm ipywidgets pyarrow plotly
+python -m ipykernel install --user --name tf312 --display-name "tf312 (Atlas - for TF)"
+/hpctmp/e1554287/conda/envs/ai1008/bin/mamba install -n tf312 -c conda-forge pydot graphviz
 
 #Data & env management (backup for reproducibility in case of purge)
 conda env export --from-history > $HOME/projects/quant-reasoning/environment.yml
@@ -111,6 +121,20 @@ alias gst='git status'
 #    -t	Sort by time: sorts by last modification time (newest first, unless reversed)
 #    -h	Human-readable: shows sizes as 1K, 234M, etc.
 #    -F	Classify: adds / for directories, * for executables, @ for symlinks, etc.
+
+#iPython theme
+vim ~/.ipython/profile_default/ipython_config.json
+#    {
+#        "TerminalInteractiveShell": {
+#            "colors": "linux",
+#            "theme": {
+#                "name": "monokai"
+#            }
+#        }
+#    }
+
+#Check IPython's documentation or use the Pygments styles list:
+$ pygmentize -L styles
 
 #git and sshkey setup
 ssh-keygen -t ed25519 -C "s.soni87@yahoo.com"
@@ -166,3 +190,36 @@ git config --global color.diff.meta "magenta bold"
 git config --global color.branch.current "yellow reverse"
 #to see current color settings:
 git config --get-regexp color
+
+If you later confirm you need GPU TF on a specific queue/node, tell me the GPU model and driver/CUDA shown there, and I’ll give you the exact install line.
+
+#to rename all files in a folder with a string appended at the front:
+$ bash << 'EOF'
+> for f in *; do
+>   if [[ -f "$f" ]]; then
+>     echo executing- mv "$f" "run1$f"
+>     mv "$f" "run1_$f"
+>   fi
+> done
+> EOF
+
+#to rename all files in a folder with a string appended at the front but ignore files that already have that string:
+$ bash << 'EOF'
+for f in *; do
+  if [[ -f "$f" && "$f" != run1_* ]]; then
+    echo executing mv "$f" "run2_$f"
+    mv "$f" "run2_$f"
+  fi
+done
+EOF
+
+#to rename all files back to original names:
+$ bash << 'EOF'
+for f in run2_*; do
+  if [[ -f "$f" ]]; then
+    newname="${f#run2_}"
+    echo renaming "$f" back to "$newname"
+    mv "$f" "$newname"
+  fi
+done
+EOF

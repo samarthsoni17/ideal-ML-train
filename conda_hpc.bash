@@ -75,6 +75,13 @@ conda activate /$WORK/$USER/conda/envs/ai1008
   307  conda install -y imageio-ffmpeg ffmpeg
   731  conda install -y scikit-plot
   760  conda install -y pydotplus
+  768  conda install -y -c conda-forge mamba
+  771  mamba install -c conda-forge pywavelets
+  689  mamba install -y conda-forge::pytorch
+  789  mamba install -y conda-forge::statsmodels
+  943  mamba install -y conda-forge::seaborn
+ 1004  mamba install -y conda-forge::kaggle
+ 1010  mamba install -y conda-forge::kmodes
 (ai1008) [ ]$ plotly_get_chrome
 mamba install -c conda-forge pywavelets
 #The Chrome executable is now located at: /hpctmp/e1554287/conda/envs/ai1008/lib/python3.13/site-packages/choreographer/cli/browser_exe/chrome-linux64/chrome
@@ -223,3 +230,8 @@ for f in run2_*; do
   fi
 done
 EOF
+
+#to use kaggle API to download data directly:
+mkdir ~/.kaggle
+vim ~/.kaggle/kaggle.json #then paste in kaggle API token json content
+!chmod 600 ~/.kaggle/kaggle.json

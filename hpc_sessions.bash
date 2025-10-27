@@ -110,6 +110,8 @@ tail -f $HOME/pbs/logs/sam_jlab_cpu.o${JOBID%%.*} #extract just the number from 
 qcat -j $JOBID -t OU
 qcat -j $JOBID -t OU -n 100
 qcat -j $JOBID -t ER
+#Use a refresh loop to monitor constantly
+watch -n 2 'qcat -j <JOBID> -t OU | tail -n 50' #reprints every 2 seconds
 
 
 #to terminate a job
@@ -216,7 +218,8 @@ jupyter lab \
   --ServerApp.port_retries=0 \
   --ServerApp.root_dir="$ROOT_DIR" \
   --ServerApp.token="$TOKEN" \
-  >"$JLAB_LOG" 2>&1 &
+  >"$JLAB_LOG" 2>&1 & #2>&1 → “merge error and normal output.”
+#It’s a very common trick when commands print useful info to stderr, this helps us grep/search or capture everything in one pipeline.
 
 JPID=$!
 

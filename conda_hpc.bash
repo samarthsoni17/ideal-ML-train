@@ -82,6 +82,7 @@ conda activate /$WORK/$USER/conda/envs/ai1008
   943  mamba install -y conda-forge::seaborn
  1004  mamba install -y conda-forge::kaggle
  1010  mamba install -y conda-forge::kmodes
+ 1200  mamba install -y conda-forge::pykeen
 (ai1008) [ ]$ plotly_get_chrome
 mamba install -c conda-forge pywavelets
 #The Chrome executable is now located at: /hpctmp/e1554287/conda/envs/ai1008/lib/python3.13/site-packages/choreographer/cli/browser_exe/chrome-linux64/chrome
@@ -196,7 +197,8 @@ pip install sentencepiece --prefer-binary speechbrain pyroomacoustics soundfile 
 pip install ipykernel
 python -m ipykernel install --user --name=torch12 --display-name="torch112 (Atlas - PyTorch)"
 #install jupyter to start session directly on this venv
-(torch112) e1554287@atlas9-c01:~$ pip install jupyter jupyterlab
+(torch112) user@hpc:~$ pip install jupyter jupyterlab
+(torch112) user@hpc:~/projects/ideal-ML-train$ pip install hub matplotlib #hub has open source data like spoken MNIST
 
 
 #make startup easy - we cd to /pbs/logs so running the JOB from the pbs/logs directory for logs etc is easier
